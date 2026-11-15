@@ -285,6 +285,7 @@ const CATS = {
   mobility:{name:'Mobility',emoji:'',color:'#34c759'}, stretching:{name:'Stretching',emoji:'',color:'#30b0c7'},
   endurance:{name:'Endurance',emoji:'',color:'#af52de'}, plyometrics:{name:'Plyometrics',emoji:'',color:'#ff375f'}
 };
+const usesMuscles=c=>['strength','bodyweight','mobility'].includes(c);
 const DEFAULT_TRACK = {strength:'WR',bodyweight:'R',mobility:'R',stretching:'T',endurance:'TD',plyometrics:'R'};
 const trackOf = code => ({weight:code.includes('W'),reps:code.includes('R'),duration:code.includes('T'),distance:code.includes('D')});
 const hexA = (hex,a) => { const n=parseInt(hex.slice(1),16); return `rgba(${n>>16},${n>>8&255},${n&255},${a})`; };
@@ -378,7 +379,7 @@ function pickPicture(id,input){ const f=input.files&&input.files[0]; if(!f) retu
   img.onload=()=>{ const c=document.createElement('canvas'), sc=Math.min(1,800/Math.max(img.width,img.height)); c.width=img.width*sc; c.height=img.height*sc; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     URL.revokeObjectURL(url); c.toBlob(b=>{ if(PICS[id]) URL.revokeObjectURL(PICS[id]); PICS[id]=URL.createObjectURL(b); MEDIA.put('p:'+id,b); ex(id).pic=true; save(); render(); },'image/jpeg',.85); }; img.src=url; }
 function mediaSection(x){
-  const m=demoMode(x), str=x.category==='strength', mu=str?musclesFor(x):{p:[],s:[]}, pn=x.motion||MOTIONS.exercises[x.name]||motionFallback(x);
+  const m=demoMode(x), str=usesMuscles(x.category), mu=str?musclesFor(x):{p:[],s:[]}, pn=x.motion||MOTIONS.exercises[x.name]||motionFallback(x);
   const seg=`<div class="seg" style="margin:0 0 8px">${MODES.map(([k,l])=>`<button class="${m===k?'on':''}" onclick="setMode('${x.id}','${k}')">${l}</button>`).join('')}</div>`;
   const frame=inner=>`<div class="card" style="padding:10px;background:#f7f8fa">${inner}</div>`;
   const empty=(ic,t)=>`<div style="height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px" class="sec"><div style="font-size:40px">${ic}</div><div class="sub">${t}</div></div>`;
@@ -437,7 +438,7 @@ function dialog(msg,actions){ UI.dialog={msg,actions}; render(); }
 // ---------- components ----------
 const icon = (cat,size=40) => ''; const _iconUnused = (cat,size=40) => `<div class="ico" style="width:${size}px;height:${size}px;font-size:${size*.5}px;background:${hexA(CATS[cat].color,.18)}">${CATS[cat].emoji}</div>`;
 const tile = (t,v,tint='var(--warm)',ic='') => `<div class="tile"><div class="cap sec">${t}</div><div class="v">${v}</div></div>`;
-const exRow = (x,sub,act,right='<span class="chev">›</span>') => `<div class="item" onclick="${act}"><div class="grow"><div class="ellip" style="font-weight:500">${esc(x.name)}</div><div class="cap sec ellip">${esc(sub ?? (x.category==='strength'?x.muscle+' · '+x.equipment:x.equipment))}</div></div>${right}</div>`;
+const exRow = (x,sub,act,right='<span class="chev">›</span>') => `<div class="item" onclick="${act}"><div class="grow"><div class="ellip" style="font-weight:500">${esc(x.name)}</div><div class="cap sec ellip">${esc(sub ?? (usesMuscles(x.category)?x.muscle+' · '+x.equipment:x.equipment))}</div></div>${right}</div>`;
 const chips = (sel,fn) => `<div class="chips">${[['all','All','','#8e8e93'],...Object.entries(CATS).map(([k,c])=>[k,c.name,c.emoji,c.color])].map(([k,n,e,c])=>{const on=(sel||'all')===k; return `<button class="chip" style="${on?`background:${hexA(c,.25)};border-color:${c};color:${c}`:''}" onclick="${fn}('${k}')">${n}</button>`;}).join('')}</div>`;
 function navbar({title,left,right,large}){ return `<div class="nav"><div>${left||''}</div><div class="title">${large?'':esc(title||'')}</div><div>${right||''}</div></div>${large?`<div class="big">${esc(title)}</div>`:''}`; }
 const back = label => `<button class="navbtn" onclick="pop()">‹ ${esc(label)}</button>`;
@@ -473,7 +474,7 @@ Screens.library = st => {
   const q=(st.q||'').toLowerCase(), cat=st.cat||'all';
   const items=S.exercises.filter(x=>(cat==='all'||x.category===cat)&&(!q||(x.name+' '+x.muscle+' '+x.equipment).toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name));
   const groups = cat==='all' ? Object.keys(CATS).map(c=>[CATS[c].name,items.filter(x=>x.category===c)]).filter(g=>g[1].length)
-    : cat!=='strength' ? [[CATS[cat].name,items]] : [...new Set(items.map(x=>x.muscle))].sort().map(m=>[m,items.filter(x=>x.muscle===m)]);
+    : !usesMuscles(cat) ? [[CATS[cat].name,items]] : [...new Set(items.map(x=>x.muscle))].sort().map(m=>[m,items.filter(x=>x.muscle===m)]);
   return `${navbar({title:'Exercises',large:true,right:`<button class="navbtn" style="font-size:26px" onclick="openSheet('exerciseEditor',{draft:newExercise()})">＋</button>`})}
   <div class="content"><input class="search" placeholder="Search name, muscle or equipment" value="${esc(st.q||'')}" oninput="libState().q=this.value;renderList()">
   ${chips(cat,'setLibCat')}<div id="libList">${groups.map(([g,xs])=>`<div class="sechead">${esc(g)} · ${xs.length}</div><div class="list">${xs.map(x=>exRow(x,null,`push('exercise',{id:'${x.id}'})`)).join('')}</div>`).join('')}</div></div>`;
@@ -492,7 +493,7 @@ Screens.exercise = st => {
   return `${navbar({title:x.name,left:back(UI.sheets.length?'Close':'Back'),right:`<button class="navbtn" onclick="openSheet('exerciseEditor',{draft:JSON.parse(JSON.stringify(ex('${x.id}')))})">Edit</button>`})}
   <div class="content">
     ${mediaSection(x)}
-    <div class="row" style="gap:8px;margin-bottom:6px"><span class="pill" style="background:${hexA(c.color,.2)};color:${c.color}">${c.name}</span><span class="cap sec">${x.category==='strength'?esc(x.muscle)+' · ':''}${esc(x.equipment)}</span></div>
+    <div class="row" style="gap:8px;margin-bottom:6px"><span class="pill" style="background:${hexA(c.color,.2)};color:${c.color}">${c.name}</span><span class="cap sec">${usesMuscles(x.category)?esc(x.muscle)+' · ':''}${esc(x.equipment)}</span></div>
     ${demoMode(x)==='text'?'<div style="height:12px"></div>':`<div class="sub" style="margin-bottom:20px">${esc(x.cue)}</div>`}
     <div class="card"><div class="row" style="justify-content:space-between"><div class="t3" style="margin:0">Progress</div>
       ${keys.length>1?`<select onchange="cur().metric=this.value;render()">${keys.map(m=>`<option value="${m}" ${m===k?'selected':''}>${METRICS[m].chart||METRICS[m].label}</option>`).join('')}</select>`:''}</div>
@@ -653,11 +654,11 @@ Screens.exerciseEditor = st => {
   <div class="sechead">Name</div><div class="list"><div class="item"><input type="text" placeholder="Exercise name" value="${esc(d.name)}" oninput="topSheet().draft.name=this.value"></div></div>
   <div class="sechead">Classification</div><div class="list">
     <div class="item"><div class="grow">Category</div>${sel('category',Object.entries(CATS).map(([k,c])=>[k,c.name]))}</div>
-    ${d.category==='strength'?`<div class="item"><div class="grow">Muscle group</div>${sel('muscle',MUSCLES.map(m=>[m,m]))}</div>`:''}
+    ${usesMuscles(d.category)?`<div class="item"><div class="grow">Muscle group</div>${sel('muscle',MUSCLES.map(m=>[m,m]))}</div>`:''}
     <div class="item"><div class="grow">Equipment</div>${sel('equipment',EQUIPMENT.map(m=>[m,m]))}</div></div>
   <div class="sechead">What to log</div><div class="list">${tg('weight','Weight (kg)')}${tg('reps','Reps')}${tg('duration','Time')}${tg('distance','Distance (km)')}</div>
   <div class="cap sec" style="margin:-14px 14px 20px">Any exercise can track weight — e.g. a weighted Cossack squat or a loaded Jefferson curl.</div>
-  ${d.category==='strength'?`<div class="sechead">Muscles worked</div><div class="list"><div class="mchips">${ANAT.muscles.map(([m,n])=>{const mu=musclesFor(d); return `<button class="mchip ${mu.p.includes(m)?'p':mu.s.includes(m)?'s':''}" onclick="cycleMuscle('${m}')">${n}</button>`;}).join('')}</div></div>
+  ${usesMuscles(d.category)?`<div class="sechead">Muscles worked</div><div class="list"><div class="mchips">${ANAT.muscles.map(([m,n])=>{const mu=musclesFor(d); return `<button class="mchip ${mu.p.includes(m)?'p':mu.s.includes(m)?'s':''}" onclick="cycleMuscle('${m}')">${n}</button>`;}).join('')}</div></div>
   <div class="cap sec" style="margin:-14px 14px 20px">Tap a muscle to cycle: primary (red) → secondary (light red) → off. These light up on the animated figure.</div>`:''}
   <div class="sechead">Exercise page</div><div class="list"><div class="item"><div class="grow">Exercise page shows</div><select onchange="topSheet().draft.mode=this.value;render()">${MODES.map(([k,l])=>`<option value="${k}" ${demoMode(d)===k?'selected':''}>${l}</option>`).join('')}</select></div>${demoMode(d)==='animation'?`<div class="item"><div class="grow">Animation</div><select onchange="topSheet().draft.motion=this.value;render()">${Object.keys(MOTIONS.patterns).sort().map(k=>`<option value="${k}" ${(d.motion||MOTIONS.exercises[d.name]||motionFallback(d))===k?'selected':''}>${k.replace(/_/g,' ')}</option>`).join('')}</select></div>`:''}</div>
   <div class="cap sec" style="margin:-14px 14px 20px">Choose an animation, your own video or picture, or just the text description. You can also switch it right on the exercise page.</div>

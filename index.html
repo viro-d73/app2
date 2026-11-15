@@ -234,13 +234,13 @@ function renderMotion(pattern, primary, secondary, tsec){
 // ---------- language ----------
 const isDE=()=>{ try{ return S.profile.lang==='de'; }catch(e){ return false; } };
 const LOC=()=>isDE()?'de-CH':'en-GB';
-const DE_EXTRA={'Video added':'Video hinzugefügt','🗑 Remove picture':'🗑 Bild entfernen','🖼️ Add picture':'🖼️ Bild hinzufügen','🖼️ Replace picture':'🖼️ Bild ersetzen','☰ Description':'☰ Beschreibung','🗑 Remove video':'🗑 Video entfernen','🎬 Add video':'🎬 Video hinzufügen','🎬 Replace video':'🎬 Video ersetzen','‹ Back':'‹ Zurück','‹ Close':'‹ Schliessen','‹ Workout':'‹ Training','‹ Profile':'‹ Profil','‹ History':'‹ Verlauf','Finish workout? Empty sets are discarded.':'Training beenden? Leere Sätze werden verworfen.',
+const DE_EXTRA={'Video added':'Video hinzugefügt','‹ Back':'‹ Zurück','‹ Close':'‹ Schliessen','‹ Workout':'‹ Training','‹ Profile':'‹ Profil','‹ History':'‹ Verlauf','Finish workout? Empty sets are discarded.':'Training beenden? Leere Sätze werden verworfen.',
   'Cancel this workout? Nothing from this session will be saved.':'Dieses Training abbrechen? Von dieser Einheit wird nichts gespeichert.',
   'Video added (this preview keeps it until you reload)':'Video hinzugefügt (bleibt in dieser Vorschau bis zum Neuladen)',
   'In the app this picks your own clip from Photos':'In der App wählst du hier ein Video aus Fotos','Give the routine a name':'Gib der Routine einen Namen',
   'Give the exercise a name':'Gib der Übung einen Namen','Pick at least one thing to log':'Wähle mindestens einen Messwert','resting':'Pause',
-  'Workout in progress':'Training läuft','https://…/video.mp4 (optional)':'https://…/video.mp4 (optional)','🔍 Search exercises':'🔍 Übungen suchen',
-  '🔍 Search name, muscle or equipment':'🔍 Name, Muskel oder Gerät suchen','Resume ›':'Fortsetzen ›','No workouts yet':'Noch keine Trainings',
+  'Workout in progress':'Training läuft','https://…/video.mp4 (optional)':'https://…/video.mp4 (optional)',
+  'Resume ›':'Fortsetzen ›','No workouts yet':'Noch keine Trainings',
   'Copy blocked by the browser':'Kopieren vom Browser blockiert','Enter your weight':'Gib dein Gewicht ein'};
 function exDE(n){ return DE.names[n]||n; }
 function T(str){
@@ -256,13 +256,14 @@ const DE_PATTERNS=[
   [/^(\d+) sets$/, m=>`${m[1]} Sätze`], [/^(\d+) reps$/, m=>`${m[1]} Wdh.`],
   [/^Training since (.+)$/, m=>`Trainiert seit ${m[1]}`], [/^since (.+)$/, m=>`seit ${m[1]}`], [/^was (.+)$/, m=>`vorher ${T(m[1])}`],
   [/^Last: (.+)$/, m=>`Zuletzt: ${T(m[1])}`], [/^Last time: (.+)$/, m=>`Letztes Mal: ${m[1]}`],
-  [/^⏱ Rest (.+)$/, m=>`⏱ Pause ${m[1]}`], [/^Rest · (.+)$/, m=>`Pause · ${exDE(m[1])}`],
+  [/^Rest (\d.*)$/, m=>`Pause ${m[1]}`], [/^Rest · (.+)$/, m=>`Pause · ${exDE(m[1])}`],
   [/^≈ ([\d.,’']+) (.+)$/, m=>`≈ ${m[1]} ${DE.ui[m[2]]||m[2]}`],
   [/^(.+) · (\d+)$/, m=>`${DE.ui[m[1]]||m[1]} · ${m[2]}`],
   [/^(.+) · (.+)$/, m=>`${DE.ui[m[1]]||exDE(m[1])} · ${DE.ui[m[2]]||m[2]}`],
   [/^(\d+) of (\d+) exercises have your own video\.$/, m=>`${m[1]} von ${m[2]} Übungen haben ein eigenes Video.`],
   [/^Imported (\d+) videos?$/, m=>m[1]==='1'?'1 Video importiert':`${m[1]} Videos importiert`],
   [/^Imported (\d+)\. No match: (.+)$/, m=>`${m[1]} importiert. Keine passende Übung: ${m[2]}`],
+  [/^(\d+) new$/, m=>`${m[1]} neu`],
   [/^Add \((\d+)\)$/, m=>`Hinzufügen (${m[1]})`], [/^(.+) in (1M|3M|6M|1Y|All)$/, m=>`${m[1]} in ${DE.ui[m[2]]||m[2]}`],
 ];
 function translateDOM(root){
@@ -280,9 +281,9 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const DAY = 864e5;
 const CATS = {
-  strength:{name:'Strength',emoji:'🏋️',color:'#ff6b29'}, bodyweight:{name:'Bodyweight',emoji:'🤸',color:'#d99a00'},
-  mobility:{name:'Mobility',emoji:'🧘',color:'#34c759'}, stretching:{name:'Stretching',emoji:'🙆',color:'#30b0c7'},
-  endurance:{name:'Endurance',emoji:'🏃',color:'#af52de'}, plyometrics:{name:'Plyometrics',emoji:'🦘',color:'#ff375f'}
+  strength:{name:'Strength',emoji:'',color:'#ff6b29'}, bodyweight:{name:'Bodyweight',emoji:'',color:'#d99a00'},
+  mobility:{name:'Mobility',emoji:'',color:'#34c759'}, stretching:{name:'Stretching',emoji:'',color:'#30b0c7'},
+  endurance:{name:'Endurance',emoji:'',color:'#af52de'}, plyometrics:{name:'Plyometrics',emoji:'',color:'#ff375f'}
 };
 const DEFAULT_TRACK = {strength:'WR',bodyweight:'R',mobility:'R',stretching:'T',endurance:'TD',plyometrics:'R'};
 const trackOf = code => ({weight:code.includes('W'),reps:code.includes('R'),duration:code.includes('T'),distance:code.includes('D')});
@@ -317,13 +318,13 @@ function metricsOf(entry){
   return m;
 }
 const METRICS = {
-  heaviest:{label:'Heaviest Weight',icon:'⚖️',f:Fmt.kg}, best1RM:{label:'Best 1RM',icon:'🏆',f:Fmt.kg},
-  bestSetVolume:{label:'Best Set Volume',icon:'📦',f:Fmt.kg}, volume:{label:'Best Session Volume',chart:'Session Volume',icon:'📊',f:Fmt.kg},
-  maxReps:{label:'Most Reps',icon:'🔁',f:v=>`${v} reps`}, totalReps:{label:'Total Reps',icon:'🔁',f:v=>`${v} reps`},
-  longestDistance:{label:'Longest Distance',icon:'📍',f:Fmt.km}, distance:{label:'Total Distance',icon:'📍',f:Fmt.km},
-  longestDuration:{label:'Longest Time',icon:'⏱️',f:Fmt.clock}, duration:{label:'Total Time',icon:'⏱️',f:Fmt.clock},
-  bestPace:{label:'Best Pace',icon:'🐇',f:v=>Fmt.clock(v)+' /km',lower:true},
-  bodyweight:{label:'Body weight',icon:'⚖️',f:v=>Fmt.num(Math.round(v*10)/10)+' kg',neutral:true}
+  heaviest:{label:'Heaviest Weight',icon:'',f:Fmt.kg}, best1RM:{label:'Best 1RM',icon:'',f:Fmt.kg},
+  bestSetVolume:{label:'Best Set Volume',icon:'',f:Fmt.kg}, volume:{label:'Best Session Volume',chart:'Session Volume',icon:'',f:Fmt.kg},
+  maxReps:{label:'Most Reps',icon:'',f:v=>`${v} reps`}, totalReps:{label:'Total Reps',icon:'',f:v=>`${v} reps`},
+  longestDistance:{label:'Longest Distance',icon:'',f:Fmt.km}, distance:{label:'Total Distance',icon:'',f:Fmt.km},
+  longestDuration:{label:'Longest Time',icon:'',f:Fmt.clock}, duration:{label:'Total Time',icon:'',f:Fmt.clock},
+  bestPace:{label:'Best Pace',icon:'',f:v=>Fmt.clock(v)+' /km',lower:true},
+  bodyweight:{label:'Body weight',icon:'',f:v=>Fmt.num(Math.round(v*10)/10)+' kg',neutral:true}
 };
 const mval = (key,m) => { const v=m[key]; return v>0?v:null; };
 function available(t){ const r=[]; if(t.weight&&t.reps) r.push('best1RM','heaviest','bestSetVolume','volume'); else if(t.weight) r.push('heaviest');
@@ -344,8 +345,8 @@ function totals(list){ const t={volume:0,distance:0,duration:0,sets:0}; for(cons
 const sameMonth = (a,b) => { a=new Date(a); b=new Date(b); return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth(); };
 const monthSessions = d => S.sessions.filter(s=>sameMonth(s.start,d));
 
-const EQ_W=[['🎳','bowling ball','bowling balls',7],['🐕','golden retriever','golden retrievers',30],['🏍️','motorbike','motorbikes',200],['🎹','grand piano','grand pianos',450],['🚗','car','cars',1500],['🦛','hippo','hippos',3000],['🐘','African elephant','African elephants',6000],['🚌','school bus','school buses',12000],['🐋','blue whale','blue whales',150000]];
-const EQ_D=[['⚽️','football pitch','football pitches',.105],['🗼','Eiffel Tower laid flat','Eiffel Towers laid end to end',.33],['🏟️','lap of a 400 m track','laps of a 400 m track',.4],['🌉','Golden Gate Bridge','Golden Gate Bridges',2.7],['🏔️','Mount Everest','Mount Everests',8.849],['⛵️','length of Lake Zurich','lengths of Lake Zurich',40],['🏅','marathon','marathons',42.195],['🇨🇭','width of Switzerland','widths of Switzerland',348]];
+const EQ_W=[['','bowling ball','bowling balls',7],['','golden retriever','golden retrievers',30],['','motorbike','motorbikes',200],['','grand piano','grand pianos',450],['','car','cars',1500],['','hippo','hippos',3000],['','African elephant','African elephants',6000],['','school bus','school buses',12000],['','blue whale','blue whales',150000]];
+const EQ_D=[['','football pitch','football pitches',.105],['','Eiffel Tower laid flat','Eiffel Towers laid end to end',.33],['','lap of a 400 m track','laps of a 400 m track',.4],['','Golden Gate Bridge','Golden Gate Bridges',2.7],['','Mount Everest','Mount Everests',8.849],['','length of Lake Zurich','lengths of Lake Zurich',40],['','marathon','marathons',42.195],['','width of Switzerland','widths of Switzerland',348]];
 function equiv(total,list){ let e=list[0]; for(const x of list) if(total/x[3]>=1) e=x; const n=total/e[3]; return [e[0], `≈ ${Fmt.count(n)} ${n>=.95&&n<1.05?e[1]:e[2]}`]; }
 
 // ---------- anatomy figure ----------
@@ -381,14 +382,14 @@ function mediaSection(x){
   const seg=`<div class="seg" style="margin:0 0 8px">${MODES.map(([k,l])=>`<button class="${m===k?'on':''}" onclick="setMode('${x.id}','${k}')">${l}</button>`).join('')}</div>`;
   const frame=inner=>`<div class="card" style="padding:10px;background:#f7f8fa">${inner}</div>`;
   const empty=(ic,t)=>`<div style="height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px" class="sec"><div style="font-size:40px">${ic}</div><div class="sub">${t}</div></div>`;
-  const row=(has,kind,add,rem)=>`<div class="row" style="justify-content:space-between;margin:-10px 0 12px">${has?`<button class="navbtn" style="font-size:14px;color:var(--red)" onclick="${rem}">🗑 Remove ${kind}</button>`:'<span></span>'}${add}</div>`;
+  const row=(has,kind,add,rem)=>`<div class="row" style="justify-content:space-between;margin:-10px 0 12px">${has?`<button class="navbtn" style="font-size:14px;color:var(--red)" onclick="${rem}">Remove ${kind}</button>`:'<span></span>'}${add}</div>`;
   if(m==='animation') return seg+frame(`<svg class="motion" viewBox="0 8 200 240" data-p="${pn}" data-m="${esc(JSON.stringify([mu.p,mu.s]))}" style="width:100%;height:290px;display:block"></svg>
     ${str?`<div class="legend"><span><i style="background:var(--muscle)"></i>Primary</span><span><i style="background:rgba(255,59,48,.38)"></i>Secondary</span><span class="ellip" style="flex:1;text-align:right">${mu.p.map(m=>MNAME[m]).join(', ')}</span></div>`:''}`);
-  if(m==='video') return seg+frame(VIDS[x.id]?`<video src="${VIDS[x.id]}" autoplay loop muted playsinline style="width:100%;height:290px;object-fit:contain;display:block;border-radius:12px;background:#ececee"></video>`:empty('🎬','No video yet'))
-    +row(VIDS[x.id],'video',`<label class="navbtn" style="font-size:14px;cursor:pointer">🎬 ${VIDS[x.id]?'Replace':'Add'} video<input type="file" accept="video/*" style="display:none" onchange="pickVideo('${x.id}',this)"></label>`,`URL.revokeObjectURL(VIDS['${x.id}']);delete VIDS['${x.id}'];MEDIA.del('v:${x.id}');render()`);
-  if(m==='picture') return seg+frame(PICS[x.id]?`<img src="${PICS[x.id]}" style="width:100%;height:290px;object-fit:contain;display:block;border-radius:12px">`:empty('🖼️','No picture yet'))
-    +row(PICS[x.id],'picture',`<label class="navbtn" style="font-size:14px;cursor:pointer">🖼️ ${PICS[x.id]?'Replace':'Add'} picture<input type="file" accept="image/*" style="display:none" onchange="pickPicture('${x.id}',this)"></label>`,`URL.revokeObjectURL(PICS['${x.id}']);delete PICS['${x.id}'];MEDIA.del('p:${x.id}');ex('${x.id}').pic=null;save();render()`);
-  return seg+`<div class="card"><div class="cap sec" style="font-weight:600;margin-bottom:6px">☰ Description</div><div style="font-size:16px;line-height:1.45">${x.cue?esc(x.cue):'<span class="sec">No description yet. Add one in Edit Exercise.</span>'}</div></div>`;
+  if(m==='video') return seg+frame(VIDS[x.id]?`<video src="${VIDS[x.id]}" autoplay loop muted playsinline style="width:100%;height:290px;object-fit:contain;display:block;border-radius:12px;background:#ececee"></video>`:empty('','No video yet'))
+    +row(VIDS[x.id],'video',`<label class="navbtn" style="font-size:14px;cursor:pointer">${VIDS[x.id]?'Replace':'Add'} video<input type="file" accept="video/*" style="display:none" onchange="pickVideo('${x.id}',this)"></label>`,`URL.revokeObjectURL(VIDS['${x.id}']);delete VIDS['${x.id}'];MEDIA.del('v:${x.id}');render()`);
+  if(m==='picture') return seg+frame(PICS[x.id]?`<img src="${PICS[x.id]}" style="width:100%;height:290px;object-fit:contain;display:block;border-radius:12px">`:empty('','No picture yet'))
+    +row(PICS[x.id],'picture',`<label class="navbtn" style="font-size:14px;cursor:pointer">${PICS[x.id]?'Replace':'Add'} picture<input type="file" accept="image/*" style="display:none" onchange="pickPicture('${x.id}',this)"></label>`,`URL.revokeObjectURL(PICS['${x.id}']);delete PICS['${x.id}'];MEDIA.del('p:${x.id}');ex('${x.id}').pic=null;save();render()`);
+  return seg+`<div class="card"><div class="cap sec" style="font-weight:600;margin-bottom:6px">Description</div><div style="font-size:16px;line-height:1.45">${x.cue?esc(x.cue):'<span class="sec">No description yet. Add one in Edit Exercise.</span>'}</div></div>`;
 }
 function slugify(n){ return n.toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
 function pickVideo(id,input){ const f=input.files&&input.files[0]; if(!f) return; if(VIDS[id]) URL.revokeObjectURL(VIDS[id]); VIDS[id]=URL.createObjectURL(f); MEDIA.put('v:'+id,f); toast('Video added'); render(); }
@@ -434,10 +435,10 @@ function toast(msg){ const t=document.createElement('div'); t.className='toast';
 function dialog(msg,actions){ UI.dialog={msg,actions}; render(); }
 
 // ---------- components ----------
-const icon = (cat,size=40) => `<div class="ico" style="width:${size}px;height:${size}px;font-size:${size*.5}px;background:${hexA(CATS[cat].color,.18)}">${CATS[cat].emoji}</div>`;
-const tile = (t,v,tint='var(--warm)',ic='') => `<div class="tile"><div class="cap sec">${ic?`<span style="color:${tint}">${ic}</span> `:''}${t}</div><div class="v">${v}</div></div>`;
+const icon = (cat,size=40) => ''; const _iconUnused = (cat,size=40) => `<div class="ico" style="width:${size}px;height:${size}px;font-size:${size*.5}px;background:${hexA(CATS[cat].color,.18)}">${CATS[cat].emoji}</div>`;
+const tile = (t,v,tint='var(--warm)',ic='') => `<div class="tile"><div class="cap sec">${t}</div><div class="v">${v}</div></div>`;
 const exRow = (x,sub,act,right='<span class="chev">›</span>') => `<div class="item" onclick="${act}"><div class="grow"><div class="ellip" style="font-weight:500">${esc(x.name)}</div><div class="cap sec ellip">${esc(sub ?? (x.category==='strength'?x.muscle+' · '+x.equipment:x.equipment))}</div></div>${right}</div>`;
-const chips = (sel,fn) => `<div class="chips">${[['all','All','▦','#8e8e93'],...Object.entries(CATS).map(([k,c])=>[k,c.name,c.emoji,c.color])].map(([k,n,e,c])=>{const on=(sel||'all')===k; return `<button class="chip" style="${on?`background:${hexA(c,.25)};border-color:${c};color:${c}`:''}" onclick="${fn}('${k}')">${e} ${n}</button>`;}).join('')}</div>`;
+const chips = (sel,fn) => `<div class="chips">${[['all','All','','#8e8e93'],...Object.entries(CATS).map(([k,c])=>[k,c.name,c.emoji,c.color])].map(([k,n,e,c])=>{const on=(sel||'all')===k; return `<button class="chip" style="${on?`background:${hexA(c,.25)};border-color:${c};color:${c}`:''}" onclick="${fn}('${k}')">${n}</button>`;}).join('')}</div>`;
 function navbar({title,left,right,large}){ return `<div class="nav"><div>${left||''}</div><div class="title">${large?'':esc(title||'')}</div><div>${right||''}</div></div>${large?`<div class="big">${esc(title)}</div>`:''}`; }
 const back = label => `<button class="navbtn" onclick="pop()">‹ ${esc(label)}</button>`;
 function lastSummary(id){ const e=prevEntry(id); if(!e) return 'Not done yet'; const t=ex(id).tracking;
@@ -449,13 +450,13 @@ const Screens = {};
 Screens.routines = () => {
   const m=monthSessions(Date.now()), t=totals(m);
   return `${navbar({title:'Workout',large:true})}<div class="content">
-    ${S.active&&!UI.cover?`<div class="banner" onclick="UI.cover=true;render()"><span style="font-size:24px">⏱️</span><div style="flex:1"><div class="hd">Workout in progress</div><div class="sub" style="opacity:.85">${esc(S.active.name)}${UI.rest?' · resting':''}</div></div><b>Resume ›</b></div>`:''}
+    ${S.active&&!UI.cover?`<div class="banner" onclick="UI.cover=true;render()"><div style="flex:1"><div class="hd">Workout in progress</div><div class="sub" style="opacity:.85">${esc(S.active.name)}${UI.rest?' · resting':''}</div></div><b>Resume ›</b></div>`:''}
     <div class="card"><div class="sub sec" style="font-weight:600;margin-bottom:10px">${new Date().toLocaleDateString(LOC(),{month:'long'})}</div>
-      <div class="tiles">${tile('Workouts',m.length,'var(--brand)','✓')}${tile('Lifted',Fmt.kg(t.volume),'var(--brand)','⚖️')}${tile('Distance',Fmt.km(t.distance),'var(--purple)','📍')}</div></div>
+      <div class="tiles">${tile('Workouts',m.length,'var(--brand)')}${tile('Lifted',Fmt.kg(t.volume),'var(--brand)')}${tile('Distance',Fmt.km(t.distance),'var(--purple)')}</div></div>
     <button class="btn" onclick="startWorkout(null)">＋ Start Empty Workout</button>
     <div class="row" style="justify-content:space-between;margin:22px 0 12px"><div style="font-size:22px;font-weight:700">My Routines</div><button class="navbtn" style="font-size:26px" onclick="openSheet('routineEditor',{draft:{id:null,name:'',ids:[]}})">⊕</button></div>
     <div class="grid2">${S.routines.map(r=>{ const xs=r.ids.map(ex).filter(Boolean); const cats=[...new Set(xs.map(x=>x.category))].slice(0,3);
-      return `<div class="rcard" onclick="push('routine',{id:'${r.id}'})"><div class="icons">${(cats.length?cats:['strength']).map(c=>icon(c,32)).join('')}</div>
+      return `<div class="rcard" onclick="push('routine',{id:'${r.id}'})">
       <div class="hd">${esc(r.name)}</div><div class="cap" style="color:var(--warm);font-weight:600">${xs.length} exercise${xs.length===1?'':'s'}</div>
       <div class="cap sec" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(xs.slice(0,3).map(x=>isDE()?exDE(x.name):x.name).join(', '))}</div></div>`; }).join('')}</div>
   </div>`;
@@ -464,7 +465,7 @@ Screens.routines = () => {
 Screens.routine = ({id}) => {
   const r=S.routines.find(r=>r.id===id); if(!r) return navbar({left:back('Workout')})+'<div class="content sec">Routine deleted</div>';
   return `${navbar({title:r.name,left:back('Workout'),right:`<button class="navbtn" onclick="openSheet('routineEditor',{draft:JSON.parse(JSON.stringify(S.routines.find(r=>r.id==='${id}')))})">Edit</button>`,large:true})}
-  <div class="content"><button class="btn" style="margin-bottom:22px" onclick="startWorkout('${id}')">▶︎ Start Workout</button>
+  <div class="content"><button class="btn" style="margin-bottom:22px" onclick="startWorkout('${id}')">Start Workout</button>
   <div class="sechead">Exercises</div><div class="list">${r.ids.map(ex).filter(Boolean).map(x=>exRow(x,lastSummary(x.id),`push('exercise',{id:'${x.id}'})`)).join('')}</div></div>`;
 };
 
@@ -474,7 +475,7 @@ Screens.library = st => {
   const groups = cat==='all' ? Object.keys(CATS).map(c=>[CATS[c].name,items.filter(x=>x.category===c)]).filter(g=>g[1].length)
     : cat!=='strength' ? [[CATS[cat].name,items]] : [...new Set(items.map(x=>x.muscle))].sort().map(m=>[m,items.filter(x=>x.muscle===m)]);
   return `${navbar({title:'Exercises',large:true,right:`<button class="navbtn" style="font-size:26px" onclick="openSheet('exerciseEditor',{draft:newExercise()})">＋</button>`})}
-  <div class="content"><input class="search" placeholder="🔍 Search name, muscle or equipment" value="${esc(st.q||'')}" oninput="libState().q=this.value;renderList()">
+  <div class="content"><input class="search" placeholder="Search name, muscle or equipment" value="${esc(st.q||'')}" oninput="libState().q=this.value;renderList()">
   ${chips(cat,'setLibCat')}<div id="libList">${groups.map(([g,xs])=>`<div class="sechead">${esc(g)} · ${xs.length}</div><div class="list">${xs.map(x=>exRow(x,null,`push('exercise',{id:'${x.id}'})`)).join('')}</div>`).join('')}</div></div>`;
 };
 function libState(){ return UI.stacks.exercises[0] || (UI.stacks.exercises[0]={screen:'library'}); }
@@ -491,19 +492,19 @@ Screens.exercise = st => {
   return `${navbar({title:x.name,left:back(UI.sheets.length?'Close':'Back'),right:`<button class="navbtn" onclick="openSheet('exerciseEditor',{draft:JSON.parse(JSON.stringify(ex('${x.id}')))})">Edit</button>`})}
   <div class="content">
     ${mediaSection(x)}
-    <div class="row" style="gap:8px;margin-bottom:6px"><span class="pill" style="background:${hexA(c.color,.2)};color:${c.color}">${c.emoji} ${c.name}</span><span class="cap sec">${x.category==='strength'?esc(x.muscle)+' · ':''}${esc(x.equipment)}</span></div>
+    <div class="row" style="gap:8px;margin-bottom:6px"><span class="pill" style="background:${hexA(c.color,.2)};color:${c.color}">${c.name}</span><span class="cap sec">${x.category==='strength'?esc(x.muscle)+' · ':''}${esc(x.equipment)}</span></div>
     ${demoMode(x)==='text'?'<div style="height:12px"></div>':`<div class="sub" style="margin-bottom:20px">${esc(x.cue)}</div>`}
     <div class="card"><div class="row" style="justify-content:space-between"><div class="t3" style="margin:0">Progress</div>
       ${keys.length>1?`<select onchange="cur().metric=this.value;render()">${keys.map(m=>`<option value="${m}" ${m===k?'selected':''}>${METRICS[m].chart||METRICS[m].label}</option>`).join('')}</select>`:''}</div>
       <div class="seg">${['1M','3M','6M','1Y','All'].map(r=>`<button class="${r===range?'on':''}" onclick="cur().range='${r}';render()">${r}</button>`).join('')}</div>
       ${k?chart(pts,k):''}</div>
-    <div class="card"><div class="t3">Personal Bests</div><div class="grid2" style="gap:10px">${recordKeys(x.tracking).map(m=>`<div class="pb"><div class="l">${METRICS[m].icon} ${METRICS[m].label}</div><div class="v">${b[m]?METRICS[m].f(b[m].v):'—'}</div><div class="cap sec" style="font-size:11px">${b[m]?Fmt.date(b[m].date):'No record yet'}</div></div>`).join('')}</div></div>
+    <div class="card"><div class="t3">Personal Bests</div><div class="grid2" style="gap:10px">${recordKeys(x.tracking).map(m=>`<div class="pb"><div class="l">${METRICS[m].label}</div><div class="v">${b[m]?METRICS[m].f(b[m].v):'—'}</div><div class="cap sec" style="font-size:11px">${b[m]?Fmt.date(b[m].date):'No record yet'}</div></div>`).join('')}</div></div>
     ${h.length?`<div class="card"><div class="t3">Recent Sessions</div>${h.slice(0,6).map(({s,e})=>`<div style="padding:6px 0;border-bottom:.5px solid var(--sep)"><div class="sub" style="font-weight:600">${Fmt.date(s.start)}</div>${e.sets.map((st,i)=>`<div class="cap sec" style="font-variant-numeric:tabular-nums">${i+1}.&nbsp; ${Fmt.set(st,x.tracking)}</div>`).join('')}${e.notes?`<div class="cap" style="font-style:italic">“${esc(e.notes)}”</div>`:''}</div>`).join('')}</div>`:''}
   </div>`;
 };
 
 function chart(pts,k){
-  if(!pts.length) return `<div style="height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center" class="sec"><div style="font-size:34px">📈</div><div class="hd" style="color:#000">No data in this range</div><div class="cap">Log this exercise to see your progress.</div></div>`;
+  if(!pts.length) return `<div style="height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center" class="sec"><div class="hd" style="color:#000">No data in this range</div><div class="cap">Log this exercise to see your progress.</div></div>`;
   const W=330,H=190,P={l:44,r:8,t:10,b:22}; const vs=pts.map(p=>p.v); let lo=Math.min(...vs),hi=Math.max(...vs); if(lo===hi){lo-=1;hi+=1;} const pad=(hi-lo)*.12; lo-=pad; hi+=pad;
   const d0=pts[0].d, d1=pts[pts.length-1].d||d0+1; const X=d=>P.l+(pts.length===1?(W-P.l-P.r)/2:(d-d0)/(d1-d0)*(W-P.l-P.r)); const Y=v=>P.t+(1-(v-lo)/(hi-lo))*(H-P.t-P.b);
   const path=pts.map((p,i)=>`${i?'L':'M'}${X(p.d).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
@@ -519,17 +520,17 @@ Screens.profile = () => {
   const t=totals(S.sessions), time=S.sessions.reduce((a,s)=>a+(s.end-s.start)/1000,0), first=S.sessions[S.sessions.length-1], n=S.sessions.length;
   const w=S.weights, latest=w[0]; let ref=null; if(latest){ ref=w.find(e=>e.date<=latest.date-30*DAY)||w[w.length-1]; }
   const diff=latest&&ref&&ref!==latest?latest.kg-ref.kg:null;
-  const av=S.profile.photo?`<img src="${S.profile.photo}" style="width:100%;height:100%;object-fit:cover">`:`<div style="font-size:44px;color:#c0c4cc">👤</div>`;
+  const av=S.profile.photo?`<img src="${S.profile.photo}" style="width:100%;height:100%;object-fit:cover">`:`<svg viewBox="0 0 24 24" width="54" height="54"><circle cx="12" cy="8.5" r="4.2" fill="#c0c4cc"/><path d="M3.8 21c1.2-4.3 4.4-6.6 8.2-6.6s7 2.3 8.2 6.6z" fill="#c0c4cc"/></svg>`;
   return `${navbar({title:'Profile',large:true})}<div class="content">
   <div class="row" style="gap:16px;margin:4px 0 18px">
     <label style="position:relative;cursor:pointer;flex-shrink:0"><div style="width:92px;height:92px;border-radius:50%;overflow:hidden;background:var(--card);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)">${av}</div>
-      <span style="position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid #fff">📷</span>
+      <span style="position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;border:2px solid #fff">+</span>
       <input type="file" accept="image/*" style="display:none" onchange="pickPhoto(this)"></label>
     <div style="min-width:0;flex:1"><input type="text" placeholder="Your name" value="${esc(S.profile.name)}" oninput="S.profile.name=this.value;save()" style="width:100%;background:none;border:0;outline:none;font-family:inherit;font-size:28px;font-weight:700;color:var(--brand);padding:0">
       <div class="sub sec">${n} workout${n===1?'':'s'} logged</div>${first?`<div class="cap sec">Training since ${new Date(first.start).toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</div>`:''}</div>
   </div>
-  <div class="card"><div class="tiles" style="margin-bottom:8px">${tile('Workouts',n,'var(--warm)','✓')}${tile('Total time',Fmt.dur(time),'var(--warm)','🕐')}</div>
-    <div class="tiles">${tile('Lifted',Fmt.kg(t.volume),'var(--warm)','⚖️')}${tile('Distance',Fmt.km(t.distance),'var(--purple)','📍')}</div></div>
+  <div class="card"><div class="tiles" style="margin-bottom:8px">${tile('Workouts',n,'var(--warm)')}${tile('Total time',Fmt.dur(time),'var(--warm)')}</div>
+    <div class="tiles">${tile('Lifted',Fmt.kg(t.volume),'var(--warm)')}${tile('Distance',Fmt.km(t.distance),'var(--purple)')}</div></div>
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="t3" style="margin:0">History</div><button class="navbtn" style="font-size:15px" onclick="push('history')">See all ›</button></div>
     ${n?S.sessions.slice(0,3).map(s=>`<div class="row" style="padding:8px 0;border-bottom:.5px solid var(--sep);cursor:pointer" onclick="push('summary',{id:'${s.id}'})">${sessionRow(s)}</div>`).join(''):'<div class="sub sec">Finished workouts show up here.</div>'}</div>
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="t3" style="margin:0">Measures</div><button class="navbtn" style="font-size:15px" onclick="push('measures')">See all ›</button></div>
@@ -543,8 +544,8 @@ Screens.profile = () => {
     <div class="cap sec" style="padding-bottom:10px;border-bottom:.5px solid var(--sep);margin-bottom:10px">Default for all exercises. You can choose differently on each exercise page.</div>
     <div class="sub sec">${Object.keys(VIDS).length} of ${S.exercises.length} exercises have your own video.</div>
     <div class="cap sec" style="margin:6px 0 10px">Add a video from any exercise page, or import several at once. Files are matched by name, e.g. back-squat.mp4.</div>
-    <label class="btn small" style="cursor:pointer">⬇︎ Import Videos<input type="file" accept="video/*" multiple style="display:none" onchange="importVideos(this)"></label></div>
-  <div class="card"><div class="t3">Language</div><div class="seg" style="margin:0"><button class="${isDE()?'':'on'}" onclick="setLang('en')">🇬🇧 English</button><button class="${isDE()?'on':''}" onclick="setLang('de')">🇩🇪 Deutsch</button></div></div>
+    <label class="btn small" style="cursor:pointer">Import Videos<input type="file" accept="video/*" multiple style="display:none" onchange="importVideos(this)"></label></div>
+  <div class="card"><div class="t3">Language</div><div class="seg" style="margin:0"><button class="${isDE()?'':'on'}" onclick="setLang('en')">English</button><button class="${isDE()?'on':''}" onclick="setLang('de')">Deutsch</button></div></div>
   </div>`;
 };
 function miniWeightChart(list){ const pts=[...list].reverse(); if(pts.length<2) return ''; const W=330,H=90; const vs=pts.map(p=>p.kg); let lo=Math.min(...vs)-.3, hi=Math.max(...vs)+.3; const d0=pts[0].date, d1=pts[pts.length-1].date;
@@ -588,17 +589,17 @@ function sessionRow(s){ const t=totals([s]); const c=ex(s.entries[0]?.exId)?.cat
 Screens.summary = ({id,done}) => {
   const s=S.sessions.find(s=>s.id===id); if(!s) return navbar({left:back('History')})+'<div class="content sec">Deleted</div>';
   const t=totals([s]); const prs=sessionPRs(s); const names=[...new Set(prs.map(p=>p.name))];
-  const eqCard=(title,val,[em,txt],tint)=>`<div class="card row" style="gap:14px"><div style="font-size:50px">${em}</div><div><div class="cap sec" style="font-weight:600">${title}</div><div style="font-size:28px;font-weight:700;color:${tint}">${val}</div><div class="sub">${txt}</div></div></div>`;
+  const eqCard=(title,val,[em,txt],tint)=>`<div class="card row" style="gap:14px"><div><div class="cap sec" style="font-weight:600">${title}</div><div style="font-size:28px;font-weight:700;color:${tint}">${val}</div><div class="sub">${txt}</div></div></div>`;
   return `${navbar({title:done?'Summary':'Workout',left:done?'':back('History'),right:done?`<button class="navbtn bold" onclick="UI.cover=false;UI.summary=null;render()">Done</button>`:''})}
   <div class="content">
     ${done?`<div class="sub" style="color:var(--warm);font-weight:600">Workout complete</div>`:''}
     <div style="font-size:32px;font-weight:700">${esc(s.name)}</div><div class="sub sec" style="margin-bottom:12px">${Fmt.dateLong(s.start)}</div>
-    <div class="tiles" style="margin-bottom:16px">${tile('Duration',Fmt.dur((s.end-s.start)/1000),'var(--brand)','🕐')}${tile('Exercises',s.entries.length,'var(--brand)','☰')}${tile('Sets',t.sets,'var(--green)','✓')}</div>
+    <div class="tiles" style="margin-bottom:16px">${tile('Duration',Fmt.dur((s.end-s.start)/1000),'var(--brand)')}${tile('Exercises',s.entries.length,'var(--brand)')}${tile('Sets',t.sets,'var(--green)')}</div>
     ${t.volume?eqCard('Total weight lifted',Fmt.kg(t.volume),equiv(t.volume,EQ_W),'var(--warm)'):''}
     ${t.distance?eqCard('Total distance',Fmt.km(t.distance),equiv(t.distance,EQ_D),'var(--purple)'):''}
-    ${!t.volume&&!t.distance&&t.duration?eqCard('Total time',Fmt.clock(t.duration),['⏱️',`≈ ${Fmt.count(t.duration/210)} pop songs back to back`],'#63e6e2'):''}
-    <div class="card"><div class="row" style="justify-content:space-between"><div class="t3">Personal Records</div>${prs.length?`<div style="color:var(--yellow);font-weight:700">🏆 ${prs.length}</div>`:''}</div>
-      ${prs.length?names.map(n=>`<div class="pr"><div class="hd" style="margin-bottom:4px">${esc(n)}</div>${prs.filter(p=>p.name===n).map(p=>`<div class="r"><span>${METRICS[p.k].icon} ${METRICS[p.k].label}</span><span style="text-align:right"><b>${METRICS[p.k].f(Math.round(p.v*10)/10)}</b><br><span class="cap sec" style="font-size:11px">${p.prev!=null?'was '+METRICS[p.k].f(Math.round(p.prev*10)/10):'first record'}</span></span></div>`).join('')}</div>`).join(''):'<div class="sub sec">No new records this session.</div>'}</div>
+    ${!t.volume&&!t.distance&&t.duration?eqCard('Total time',Fmt.clock(t.duration),['',`≈ ${Fmt.count(t.duration/210)} pop songs back to back`],'#63e6e2'):''}
+    <div class="card"><div class="row" style="justify-content:space-between"><div class="t3">Personal Records</div>${prs.length?`<div style="color:var(--yellow);font-weight:700">${prs.length} new</div>`:''}</div>
+      ${prs.length?names.map(n=>`<div class="pr"><div class="hd" style="margin-bottom:4px">${esc(n)}</div>${prs.filter(p=>p.name===n).map(p=>`<div class="r"><span>${METRICS[p.k].label}</span><span style="text-align:right"><b>${METRICS[p.k].f(Math.round(p.v*10)/10)}</b><br><span class="cap sec" style="font-size:11px">${p.prev!=null?'was '+METRICS[p.k].f(Math.round(p.prev*10)/10):'first record'}</span></span></div>`).join('')}</div>`).join(''):'<div class="sub sec">No new records this session.</div>'}</div>
     <div class="card"><div class="t3">Exercises</div>${s.entries.map(e=>{const tr=ex(e.exId)?.tracking||trackOf('WRTD'); return `<div style="padding:6px 0;border-bottom:.5px solid var(--sep)"><div class="sub" style="font-weight:600">${esc(e.name)}</div><div class="cap sec">${e.sets.map(x=>Fmt.set(x,tr)).join('&nbsp;&nbsp; ')}</div>${e.notes?`<div class="cap" style="font-style:italic">“${esc(e.notes)}”</div>`:''}</div>`;}).join('')}</div>
     ${monthOverview(s.start,s.id)}
   </div>`;
@@ -632,7 +633,7 @@ Screens.picker = st => {
   const q=st.q.toLowerCase();
   const items=S.exercises.filter(x=>!excluded.includes(x.id)&&(st.cat==='all'||x.category===st.cat)&&(!q||(x.name+' '+x.muscle+' '+x.equipment).toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name));
   return `${navbar({title:'Add Exercises',left:`<button class="navbtn" onclick="closeSheet()">Cancel</button>`,right:`<button class="navbtn bold" onclick="pickDone()">Add${st.sel.length?` (${st.sel.length})`:''}</button>`})}
-  <div class="content" style="padding-top:8px"><input class="search" placeholder="🔍 Search exercises" value="${esc(st.q)}" oninput="topSheet().q=this.value;renderPicker()">${chips(st.cat,'setPickCat')}
+  <div class="content" style="padding-top:8px"><input class="search" placeholder="Search exercises" value="${esc(st.q)}" oninput="topSheet().q=this.value;renderPicker()">${chips(st.cat,'setPickCat')}
   <div class="list"><div class="item" style="color:var(--brand)" onclick="openSheet('exerciseEditor',{draft:newExercise(),pick:true})">⊞ Create Custom Exercise</div></div>
   <div class="list" id="pickList">${items.map(x=>{const on=st.sel.includes(x.id); return exRow(x,null,`togglePick('${x.id}')`,`<span style="font-size:22px;color:${on?'var(--brand)':'#5a5a5e'}">${on?'●':'○'}</span>`);}).join('')}</div></div>`;
 };
@@ -651,10 +652,10 @@ Screens.exerciseEditor = st => {
   <div class="content form" style="padding-top:12px">
   <div class="sechead">Name</div><div class="list"><div class="item"><input type="text" placeholder="Exercise name" value="${esc(d.name)}" oninput="topSheet().draft.name=this.value"></div></div>
   <div class="sechead">Classification</div><div class="list">
-    <div class="item"><div class="grow">Category</div>${sel('category',Object.entries(CATS).map(([k,c])=>[k,c.emoji+' '+c.name]))}</div>
+    <div class="item"><div class="grow">Category</div>${sel('category',Object.entries(CATS).map(([k,c])=>[k,c.name]))}</div>
     ${d.category==='strength'?`<div class="item"><div class="grow">Muscle group</div>${sel('muscle',MUSCLES.map(m=>[m,m]))}</div>`:''}
     <div class="item"><div class="grow">Equipment</div>${sel('equipment',EQUIPMENT.map(m=>[m,m]))}</div></div>
-  <div class="sechead">What to log</div><div class="list">${tg('weight','⚖️ Weight (kg)')}${tg('reps','🔁 Reps')}${tg('duration','⏱️ Time')}${tg('distance','📍 Distance (km)')}</div>
+  <div class="sechead">What to log</div><div class="list">${tg('weight','Weight (kg)')}${tg('reps','Reps')}${tg('duration','Time')}${tg('distance','Distance (km)')}</div>
   <div class="cap sec" style="margin:-14px 14px 20px">Any exercise can track weight — e.g. a weighted Cossack squat or a loaded Jefferson curl.</div>
   ${d.category==='strength'?`<div class="sechead">Muscles worked</div><div class="list"><div class="mchips">${ANAT.muscles.map(([m,n])=>{const mu=musclesFor(d); return `<button class="mchip ${mu.p.includes(m)?'p':mu.s.includes(m)?'s':''}" onclick="cycleMuscle('${m}')">${n}</button>`;}).join('')}</div></div>
   <div class="cap sec" style="margin:-14px 14px 20px">Tap a muscle to cycle: primary (red) → secondary (light red) → off. These light up on the animated figure.</div>`:''}
@@ -679,7 +680,7 @@ Screens.workout = () => {
   <div class="content" style="padding-top:8px;padding-bottom:${UI.rest?200:110}px">
     <input type="text" value="${esc(w.name)}" oninput="S.active.name=this.value;save()" style="background:none;border:0;color:var(--brand);font-size:24px;font-weight:700;font-family:inherit;outline:none;width:100%">
     <div class="cap sec" style="margin-bottom:10px">${Fmt.dateLong(w.start)}</div>
-    <div class="tiles" style="margin-bottom:16px">${tile('Sets done',done,'var(--green)','✓')}${tile('Volume',Fmt.kg(t.volume),'var(--brand)','⚖️')}${t.distance?tile('Distance',Fmt.km(t.distance),'var(--purple)','📍'):''}</div>
+    <div class="tiles" style="margin-bottom:16px">${tile('Sets done',done,'var(--green)')}${tile('Volume',Fmt.kg(t.volume),'var(--brand)')}${t.distance?tile('Distance',Fmt.km(t.distance),'var(--purple)'):''}</div>
     ${w.entries.map((e,ei)=>logCard(e,ei)).join('')}
     <button class="btn tonal" onclick="openSheet('picker',{sel:[],cat:'all',q:'',target:'workout'})">＋ Add Exercise</button>
     <button class="navbtn" style="color:var(--red);display:block;margin:16px auto" onclick="dialog('Cancel this workout? Nothing from this session will be saved.',[['Discard Workout',()=>{S.active=null;UI.rest=null;UI.cover=false;save();render();},true]])">Cancel Workout</button>
@@ -701,7 +702,7 @@ function logCard(e,ei){
       ${t.duration?`<input class="num" inputmode="text" placeholder="${ph(p?.seconds,Fmt.clock,minutes?'min':'sec')}" value="${s.seconds!=null?Fmt.clock(s.seconds):''}" oninput="${path}.seconds=Fmt.parseDur(this.value,${minutes});save()">`:''}
       ${t.distance?`<input class="num" inputmode="decimal" placeholder="${p?.km!=null?Fmt.num(p.km):'km'}" value="${s.km??''}" oninput="setNum(${path},'km',this.value)">`:''}
       <button class="check ${s.done?'on':''}" onclick="toggleDone(${ei},${si})">${s.done?'✓':''}</button></div>
-      <div class="restrow ${s.rest?'':'off'}" onclick="openSheet('restPicker',{ei:${ei},si:${si},val:${s.rest||90}})"><span></span>⏱ ${s.rest?'Rest '+restLabel(s.rest):'Add rest'}<span></span></div>`; }).join('')}
+      <div class="restrow ${s.rest?'':'off'}" onclick="openSheet('restPicker',{ei:${ei},si:${si},val:${s.rest||90}})"><span></span>${s.rest?'Rest '+restLabel(s.rest):'Add rest'}<span></span></div>`; }).join('')}
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn tonal small" onclick="addSet(${ei})">＋ Add Set</button>${e.sets.length>1?`<button class="btn red small" style="width:50px" onclick="S.active.entries[${ei}].sets.pop();save();render()">−</button>`:''}</div></div>`;
 }
 function setNum(obj,key,val,int){ const v=parseFloat(String(val).replace(',','.')); obj[key]=isNaN(v)?null:(int?Math.round(v):v); save(); }

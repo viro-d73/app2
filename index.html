@@ -456,7 +456,7 @@ Screens.routines = () => {
       <div class="tiles">${tile('Workouts',m.length,'var(--brand)')}${tile('Lifted',Fmt.kg(t.volume),'var(--brand)')}${tile('Distance',Fmt.km(t.distance),'var(--purple)')}</div></div>
     <button class="btn" onclick="startWorkout(null)">＋ Start Empty Workout</button>
     <div class="row" style="justify-content:space-between;margin:22px 0 12px"><div style="font-size:22px;font-weight:700">My Routines</div><button class="navbtn" style="font-size:26px" onclick="openSheet('routineEditor',{draft:{id:null,name:'',ids:[]}})">⊕</button></div>
-    <div class="grid2">${S.routines.map(r=>{ const xs=r.ids.map(ex).filter(Boolean); const cats=[...new Set(xs.map(x=>x.category))].slice(0,3);
+    <div class="grid2">${[...S.routines].sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'})).map(r=>{ const xs=r.ids.map(ex).filter(Boolean); const cats=[...new Set(xs.map(x=>x.category))].slice(0,3);
       return `<div class="rcard" onclick="push('routine',{id:'${r.id}'})">
       <div class="hd">${esc(r.name)}</div><div class="cap" style="color:var(--warm);font-weight:600">${xs.length} exercise${xs.length===1?'':'s'}</div>
       <div class="cap sec" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(xs.slice(0,3).map(x=>isDE()?exDE(x.name):x.name).join(', '))}</div></div>`; }).join('')}</div>
@@ -775,8 +775,12 @@ function render(resetScroll){
 function runDialog(i){ const a=UI.dialog.actions[i][1]; UI.dialog=null; a(); if(UI.dialog==null) render(); }
 function switchTab(k){ if(UI.tab===k){ UI.stacks[k]=k==='exercises'?[libState()]:[]; } UI.tab=k; render(true); }
 // library uses stacks.exercises[0] as its root state; pushes go after it
-push=function(screen,p={}){ if(UI.sheets.length){ openSheet(screen,p); return; } if(UI.tab==='exercises') libState(); UI.stacks[UI.tab].push({screen,...p}); render(true); };
-pop=function(){ if(UI.sheets.length){ closeSheet(); return; } const st=UI.stacks[UI.tab]; if(UI.tab==='exercises'&&st.length<=1) return; st.pop(); render(true); };
+// Remember where each screen was scrolled to, so going back returns to the same spot.
+function curScroll(){ const c=document.querySelector('#app > .screen .content'); return c?c.scrollTop:0; }
+function screenState(){ const st=UI.stacks[UI.tab]; return st.length?st[st.length-1]:(UI.tab==='exercises'?libState():(UI.root=UI.root||{})[UI.tab]||((UI.root[UI.tab]={})) ); }
+push=function(screen,p={}){ if(UI.sheets.length){ openSheet(screen,p); return; } if(UI.tab==='exercises') libState(); screenState()._scroll=curScroll(); UI.stacks[UI.tab].push({screen,...p}); render(true); };
+pop=function(){ if(UI.sheets.length){ closeSheet(); return; } const st=UI.stacks[UI.tab]; if(UI.tab==='exercises'&&st.length<=1) return; st.pop(); render(true);
+  const y=screenState()._scroll||0; const c=document.querySelector('#app > .screen .content'); if(c) c.scrollTop=y; };
 setInterval(()=>{ if(UI.rest){ const left=(UI.rest.end-Date.now())/1000; if(left<=0){ UI.rest=null; beep(); toast('Rest over — next set!'); render(); } else { const t=document.getElementById('restT'), b=document.getElementById('restP'); if(t) t.textContent=Fmt.clock(Math.ceil(left)); if(b) b.style.width=Math.min(100,left/UI.rest.total*100)+'%'; } } },250);
 setInterval(()=>{ const el=document.getElementById('timer'); if(el&&S.active) el.textContent=Fmt.clock((Date.now()-S.active.start)/1000);
   const c=document.getElementById('clock'); const d=new Date(); c.textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'); },1000);

@@ -436,7 +436,7 @@ function dialog(msg,actions){ UI.dialog={msg,actions}; render(); }
 // ---------- components ----------
 const icon = (cat,size=40) => `<div class="ico" style="width:${size}px;height:${size}px;font-size:${size*.5}px;background:${hexA(CATS[cat].color,.18)}">${CATS[cat].emoji}</div>`;
 const tile = (t,v,tint='var(--warm)',ic='') => `<div class="tile"><div class="cap sec">${ic?`<span style="color:${tint}">${ic}</span> `:''}${t}</div><div class="v">${v}</div></div>`;
-const exRow = (x,sub,act,right='<span class="chev">›</span>') => `<div class="item" onclick="${act}">${icon(x.category)}<div class="grow"><div class="ellip" style="font-weight:500">${esc(x.name)}</div><div class="cap sec ellip">${esc(sub ?? (x.category==='strength'?x.muscle+' · '+x.equipment:x.equipment))}</div></div>${right}</div>`;
+const exRow = (x,sub,act,right='<span class="chev">›</span>') => `<div class="item" onclick="${act}"><div class="grow"><div class="ellip" style="font-weight:500">${esc(x.name)}</div><div class="cap sec ellip">${esc(sub ?? (x.category==='strength'?x.muscle+' · '+x.equipment:x.equipment))}</div></div>${right}</div>`;
 const chips = (sel,fn) => `<div class="chips">${[['all','All','▦','#8e8e93'],...Object.entries(CATS).map(([k,c])=>[k,c.name,c.emoji,c.color])].map(([k,n,e,c])=>{const on=(sel||'all')===k; return `<button class="chip" style="${on?`background:${hexA(c,.25)};border-color:${c};color:${c}`:''}" onclick="${fn}('${k}')">${e} ${n}</button>`;}).join('')}</div>`;
 function navbar({title,left,right,large}){ return `<div class="nav"><div>${left||''}</div><div class="title">${large?'':esc(title||'')}</div><div>${right||''}</div></div>${large?`<div class="big">${esc(title)}</div>`:''}`; }
 const back = label => `<button class="navbtn" onclick="pop()">‹ ${esc(label)}</button>`;
@@ -618,7 +618,7 @@ Screens.routineEditor = st => {
   const d=st.draft;
   return `${navbar({title:d.id?'Edit Routine':'New Routine',left:`<button class="navbtn" onclick="closeSheet()">Cancel</button>`,right:`<button class="navbtn bold" onclick="saveRoutine()">Save</button>`})}
   <div class="content form" style="padding-top:12px"><div class="sechead">Name</div><div class="list"><div class="item"><input type="text" placeholder="e.g. Chest & Shoulders" value="${esc(d.name)}" oninput="topSheet().draft.name=this.value"></div></div>
-  <div class="sechead">Exercises</div><div class="list"><div class="draglist">${d.ids.map((id,i)=>{const x=ex(id); return x?`<div class="item drag-row"><button class="check" style="border:0;background:var(--red);width:22px;height:22px;border-radius:50%;margin:0;font-weight:700" onclick="topSheet().draft.ids.splice(${i},1);render()">−</button>${icon(x.category,34)}<div class="grow ellip">${esc(x.name)}</div><span class="handle" onpointerdown="dragStart(event,'routine')">≡</span></div>`:'';}).join('')}
+  <div class="sechead">Exercises</div><div class="list"><div class="draglist">${d.ids.map((id,i)=>{const x=ex(id); return x?`<div class="item drag-row"><button class="check" style="border:0;background:var(--red);width:22px;height:22px;border-radius:50%;margin:0;font-weight:700" onclick="topSheet().draft.ids.splice(${i},1);render()">−</button><div class="grow ellip">${esc(x.name)}</div><span class="handle" onpointerdown="dragStart(event,'routine')">≡</span></div>`:'';}).join('')}
 </div>
     <div class="item" style="color:var(--brand);cursor:pointer" onclick="openSheet('picker',{sel:[],cat:'all',q:'',target:'routine'})">⊕ Add Exercises</div></div>
   <div class="cap sec" style="margin:-14px 14px 20px">Hold ≡ and drag an exercise to any position.</div>
@@ -690,7 +690,7 @@ function logCard(e,ei){
   const cols=['28px','1fr']; if(t.weight) cols.push('62px'); if(t.reps) cols.push('52px'); if(t.duration) cols.push('66px'); if(t.distance) cols.push('58px'); cols.push('34px');
   const gt=`grid-template-columns:${cols.join(' ')}`;
   const ph=(v,f,dflt)=>v!=null?f(v):dflt;
-  return `<div class="card"><div class="row" style="gap:10px">${x?icon(x.category,30):''}<div class="hd" style="color:var(--brand);flex:1;cursor:pointer" onclick="openSheet('exercise',{id:'${e.exId}'})">${esc(e.name)}</div>
+  return `<div class="card"><div class="row" style="gap:10px"><div class="hd" style="color:var(--brand);flex:1;cursor:pointer" onclick="openSheet('exercise',{id:'${e.exId}'})">${esc(e.name)}</div>
     <button class="navbtn" style="font-size:20px" onclick="dialog(S.active.entries[${ei}].name,[['Exercise details',()=>openSheet('exercise',{id:'${e.exId}'})],['Reorder exercises',()=>openSheet('reorder')],['Remove exercise',()=>{S.active.entries.splice(${ei},1);save();render();},true]])">⋯</button></div>
     <textarea class="note" rows="1" placeholder="${esc(prev?.notes?'Last time: '+prev.notes:'Notes (seat height, grip, how it felt…)')}" oninput="S.active.entries[${ei}].notes=this.value;save()">${esc(e.notes)}</textarea>
     <div class="setgrid" style="${gt}"><div class="h">SET</div><div class="h">PREVIOUS</div>${t.weight?'<div class="h">KG</div>':''}${t.reps?'<div class="h">REPS</div>':''}${t.duration?'<div class="h">TIME</div>':''}${t.distance?'<div class="h">KM</div>':''}<div class="h">✓</div></div>
@@ -734,7 +734,7 @@ Screens.restPicker = st => {
 function saveRest(all){ const st=topSheet(); const e=S.active.entries[st.ei]; const v=st.val||null; if(all) e.sets.forEach(x=>x.rest=v); else e.sets[st.si].rest=v; save(); closeSheet(); }
 
 Screens.reorder = () => `${navbar({title:'Reorder Exercises',right:`<button class="navbtn bold" onclick="closeSheet()">Done</button>`})}
-  <div class="content" style="padding-top:12px"><div class="list"><div class="draglist">${(S.active?.entries||[]).map(e=>{const x=ex(e.exId); return `<div class="item drag-row">${x?icon(x.category,34):''}<div class="grow ellip">${esc(e.name)}<div class="cap sec">${e.sets.length} sets</div></div><span class="handle" onpointerdown="dragStart(event,'workout')">≡</span></div>`;}).join('')}</div></div>
+  <div class="content" style="padding-top:12px"><div class="list"><div class="draglist">${(S.active?.entries||[]).map(e=>{const x=ex(e.exId); return `<div class="item drag-row"><div class="grow ellip">${esc(e.name)}<div class="cap sec">${e.sets.length} sets</div></div><span class="handle" onpointerdown="dragStart(event,'workout')">≡</span></div>`;}).join('')}</div></div>
   <div class="cap sec" style="margin:-14px 14px">Hold ≡ and drag an exercise to any position — straight from the bottom to the top if you like.</div></div>`;
 
 // ---------- drag to reorder (any distance, one move) ----------

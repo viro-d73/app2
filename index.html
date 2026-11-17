@@ -549,6 +549,7 @@ Screens.profile = () => {
     <div class="cap sec" style="margin:6px 0 10px">Add a video from any exercise page, or import several at once. Files are matched by name, e.g. back-squat.mp4.</div>
     <label class="btn small" style="cursor:pointer">Import Videos<input type="file" accept="video/*" multiple style="display:none" onchange="importVideos(this)"></label></div>
   <div class="card"><div class="t3">Language</div><div class="seg" style="margin:0"><button class="${isDE()?'':'on'}" onclick="setLang('en')">English</button><button class="${isDE()?'on':''}" onclick="setLang('de')">Deutsch</button></div></div>
+  <div class="cap sec" style="text-align:center;margin:4px 0 24px">Version 17.11.2026 19:27</div>
   </div>`;
 };
 function miniWeightChart(list){ const pts=[...list].reverse(); if(pts.length<2) return ''; const W=330,H=90; const vs=pts.map(p=>p.kg); let lo=Math.min(...vs)-.3, hi=Math.max(...vs)+.3; const d0=pts[0].date, d1=pts[pts.length-1].date;

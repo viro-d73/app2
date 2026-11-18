@@ -56,6 +56,9 @@ body{display:flex;align-items:center;justify-content:center;gap:40px;padding:24p
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;border:1px solid transparent;background:var(--card);color:var(--brand);border-radius:20px;padding:7px 12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.searchwrap{position:relative}.searchwrap .search{padding-right:40px}
+.searchwrap .clear{display:none;position:absolute;right:8px;top:7px;width:24px;height:24px;border-radius:50%;border:0;background:#b8b8bd;color:#fff;font-size:17px;line-height:23px;padding:0;cursor:pointer;font-family:inherit}
+.searchwrap.has .clear{display:block}
 .search{width:100%;background:var(--card);border:0;border-radius:10px;padding:9px 12px;color:var(--brand);font-size:16px;margin-bottom:10px;font-family:inherit;outline:none}
 .tabbar{position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(249,249,251,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;padding-top:7px;z-index:20}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:500;color:var(--sec);cursor:pointer;background:none;border:0;font-family:inherit}
@@ -543,10 +546,12 @@ Screens.library = st => {
   const groups = cat==='all' ? Object.keys(CATS).map(c=>[CATS[c].name,items.filter(x=>x.category===c)]).filter(g=>g[1].length)
     : !usesMuscles(cat) ? [[CATS[cat].name,items]] : [...new Set(items.map(x=>x.muscle))].sort().map(m=>[m,items.filter(x=>x.muscle===m)]);
   return `${navbar({title:'Exercises',large:true,right:`<button class="navbtn" style="font-size:26px" onclick="openSheet('exerciseEditor',{draft:newExercise()})">＋</button>`})}
-  <div class="content"><input class="search" placeholder="Search name, muscle or equipment" value="${esc(st.q||'')}" oninput="libState().q=this.value;renderList()">
+  <div class="content"><div class="searchwrap ${st.q?'has':''}"><input class="search" placeholder="Search name, muscle or equipment" value="${esc(st.q||'')}" oninput="libState().q=this.value;this.parentNode.classList.toggle('has',!!this.value);renderList()"><button class="clear" aria-label="Clear" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault();clearSearch(this,'lib')" onclick="clearSearch(this,'lib')">×</button></div>
   ${chips(cat,'setLibCat')}<div id="libList">${groups.map(([g,xs])=>`<div class="sechead">${esc(g)} · ${xs.length}</div><div class="list">${xs.map(x=>exRow(x,null,`push('exercise',{id:'${x.id}'})`)).join('')}</div>`).join('')}</div></div>`;
 };
 function libState(){ return UI.stacks.exercises[0] || (UI.stacks.exercises[0]={screen:'library'}); }
+function clearSearch(btn,kind){ const input=btn.previousElementSibling; input.value=''; btn.parentNode.classList.remove('has');
+  if(kind==='lib'){ libState().q=''; renderList(); } else { topSheet().q=''; renderPicker(); } input.focus(); }
 function setLibCat(c){ libState().cat=c; render(); }
 function renderList(){ const el=document.createElement('div'); el.innerHTML=Screens.library(libState()); $('#libList').innerHTML=el.querySelector('#libList').innerHTML; }
 
@@ -619,7 +624,7 @@ Screens.profile = () => {
     <div class="row" style="gap:8px;margin-top:10px"><button class="btn small" onclick="exportBackup()">Export Backup</button>
     <label class="btn tonal small" style="cursor:pointer">Import Backup<input type="file" accept=".csv,text/csv,text/comma-separated-values,text/plain" style="display:none" onchange="importBackup(this)"></label></div></div>
   <div class="card"><div class="t3">Language</div><div class="seg" style="margin:0"><button class="${isDE()?'':'on'}" onclick="setLang('en')">English</button><button class="${isDE()?'on':''}" onclick="setLang('de')">Deutsch</button></div></div>
-  <div class="cap sec" style="text-align:center;margin:4px 0 24px">Version 18.11.2026 10:05</div>
+  <div class="cap sec" style="text-align:center;margin:4px 0 24px">Version 18.11.2026 10:40</div>
   </div>`;
 };
 function miniWeightChart(list){ const pts=[...list].reverse(); if(pts.length<2) return ''; const W=330,H=90; const vs=pts.map(p=>p.kg); let lo=Math.min(...vs)-.3, hi=Math.max(...vs)+.3; const d0=pts[0].date, d1=pts[pts.length-1].date;
@@ -707,7 +712,7 @@ Screens.picker = st => {
   const q=st.q.toLowerCase();
   const items=S.exercises.filter(x=>!excluded.includes(x.id)&&(st.cat==='all'||x.category===st.cat)&&(!q||(x.name+' '+x.muscle+' '+x.equipment).toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name));
   return `${navbar({title:'Add Exercises',left:`<button class="navbtn" onclick="closeSheet()">Cancel</button>`,right:`<button class="navbtn bold" onclick="pickDone()">Add${st.sel.length?` (${st.sel.length})`:''}</button>`})}
-  <div class="content" style="padding-top:8px"><input class="search" placeholder="Search exercises" value="${esc(st.q)}" oninput="topSheet().q=this.value;renderPicker()">${chips(st.cat,'setPickCat')}
+  <div class="content" style="padding-top:8px"><div class="searchwrap ${st.q?'has':''}"><input class="search" placeholder="Search exercises" value="${esc(st.q)}" oninput="topSheet().q=this.value;this.parentNode.classList.toggle('has',!!this.value);renderPicker()"><button class="clear" aria-label="Clear" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault();clearSearch(this,'pick')" onclick="clearSearch(this,'pick')">×</button></div>${chips(st.cat,'setPickCat')}
   <div class="list"><div class="item" style="color:var(--brand)" onclick="openSheet('exerciseEditor',{draft:newExercise(),pick:true})">⊞ Create Custom Exercise</div></div>
   <div class="list" id="pickList">${items.map(x=>{const on=st.sel.includes(x.id); return exRow(x,null,`togglePick('${x.id}')`,`<span style="font-size:22px;color:${on?'var(--brand)':'#5a5a5e'}">${on?'●':'○'}</span>`);}).join('')}</div></div>`;
 };
